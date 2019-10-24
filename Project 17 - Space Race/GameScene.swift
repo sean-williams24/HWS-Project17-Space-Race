@@ -24,10 +24,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     let possibleEnemies = ["ball", "hammer", "tv"]
     var isGameOver = false
     var gameTimer: Timer?
+    var enemyIndex = 0
+    var timeInterval = 1.0
+    
     
     override func didMove(to view: SKView) {
         backgroundColor = .black
-        
+        print("DID mOVE")
         starfield = SKEmitterNode(fileNamed: "starfield")!
         starfield.position = CGPoint(x: 1024, y: 384)
         starfield.advanceSimulationTime(10)
@@ -50,12 +53,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         physicsWorld.gravity = CGVector(dx: 0, dy: 0)
         physicsWorld.contactDelegate = self
         
-        gameTimer = Timer.scheduledTimer(timeInterval: 0.35, target: self, selector: #selector(createEnemy), userInfo: nil, repeats: true)
+        gameTimer = Timer.scheduledTimer(timeInterval: timeInterval, target: self, selector: #selector(createEnemy), userInfo: nil, repeats: true)
         
     }
     
     @objc func createEnemy() {
         guard let enemy = possibleEnemies.randomElement() else { return }
+
+        enemyIndex += 1
 
         let sprite = SKSpriteNode(imageNamed: enemy)
         sprite.position = CGPoint(x: 1200, y: Int.random(in: 50...736))
@@ -74,6 +79,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     
+    
     override func update(_ currentTime: TimeInterval) {
         // Called before each frame is rendered
         for node in children {
@@ -84,6 +90,16 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
         if !isGameOver {
             score += 1
+        }
+        
+        if enemyIndex > 4 {
+            timeInterval -= 0.1
+            if timeInterval <= 0.15 {
+                timeInterval = 0.1
+            }
+            enemyIndex = 0
+            gameTimer?.invalidate()
+            gameTimer = Timer.scheduledTimer(timeInterval: timeInterval, target: self, selector: #selector(createEnemy), userInfo: nil, repeats: true)
         }
     }
     
@@ -96,9 +112,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         } else if location.y > 668 {
             location.y = 668
         }
-
         player.position = location
+
     }
+    
+
+ 
     
     func didBegin(_ contact: SKPhysicsContact) {
         let explosion = SKEmitterNode(fileNamed: "explosion")!
